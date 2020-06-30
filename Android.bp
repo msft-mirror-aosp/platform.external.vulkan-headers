@@ -34,6 +34,7 @@ ndk_headers {
 cc_library_headers {
     name: "vulkan_headers",
     export_include_dirs: ["include"],
+    host_supported: true,
     vendor_available: true,
     sdk_version: "24",
 }

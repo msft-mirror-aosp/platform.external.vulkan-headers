@@ -45,3 +45,9 @@ llndk_headers {
     name: "vulkan_headers_llndk",
     export_include_dirs: ["include"],
 }
+
+// This module makes Vulkan XML file available to vendor code.
+filegroup {
+    name: "vulkan_headers_registry",
+    srcs: ["registry/vk.xml"],
+}

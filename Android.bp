@@ -37,6 +37,10 @@ cc_library_headers {
     host_supported: true,
     vendor_available: true,
     sdk_version: "24",
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.virt",
+    ],
 }
 
 // This module makes Vulkan headers available to vendor code that is

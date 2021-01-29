@@ -37,6 +37,10 @@ cc_library_headers {
     host_supported: true,
     vendor_available: true,
     sdk_version: "24",
+    apex_available: [
+        "//apex_available:platform",
+        "com.android.virt",
+    ],
 }
 
 // This module makes Vulkan headers available to vendor code that is
@@ -44,4 +48,10 @@ cc_library_headers {
 llndk_headers {
     name: "vulkan_headers_llndk",
     export_include_dirs: ["include"],
+}
+
+// This module makes Vulkan XML file available to vendor code.
+filegroup {
+    name: "vulkan_headers_registry",
+    srcs: ["registry/vk.xml"],
 }

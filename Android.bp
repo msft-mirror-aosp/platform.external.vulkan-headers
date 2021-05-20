@@ -71,13 +71,9 @@ cc_library_headers {
         "//apex_available:platform",
         "com.android.virt",
     ],
-}
-
-// This module makes Vulkan headers available to vendor code that is
-// restricted to LLNDK dependencies.
-llndk_headers {
-    name: "vulkan_headers_llndk",
-    export_include_dirs: ["include"],
+    llndk: {
+        llndk_headers: true,
+    },
 }
 
 // This module makes Vulkan XML file available to vendor code.

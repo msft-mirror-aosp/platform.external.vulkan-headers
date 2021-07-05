@@ -234,7 +234,11 @@ class COutputGenerator(OutputGenerator):
 
     def appendSection(self, section, text):
         "Append a definition to the specified section"
-        # self.sections[section].append('SECTION: ' + section + '\n')
+
+        if section is None:
+            self.logMsg('error', 'Missing section in appendSection (probably a <type> element missing its \'category\' attribute. Text:', text)
+            exit(1)
+
         self.sections[section].append(text)
         self.feature_not_empty = True
 

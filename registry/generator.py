@@ -43,7 +43,10 @@ def enquote(s):
     """Return string argument with surrounding quotes,
       for serialization into Python code."""
     if s:
-        return "'{}'".format(s)
+        if isinstance(s, str):
+            return "'{}'".format(s)
+        else:
+            return s
     return None
 
 
@@ -120,7 +123,9 @@ class GeneratorOptions:
                  emitExtensions=None,
                  emitSpirv=None,
                  reparentEnums=True,
-                 sortProcedure=regSortFeatures):
+                 sortProcedure=regSortFeatures,
+                 requireCommandAliases=False,
+                ):
         """Constructor.
 
         Arguments:
@@ -230,6 +235,10 @@ class GeneratorOptions:
         self.codeGenerator = False
         """True if this generator makes compilable code"""
 
+        self.requireCommandAliases = requireCommandAliases
+        """True if alias= attributes of <command> tags are transitively
+        required."""
+
     def emptyRegex(self, pat):
         """Substitute a regular expression which matches no version
         or extension names for None or the empty string."""
@@ -256,6 +265,17 @@ class OutputGenerator:
         'define': 'defines',
         'basetype': 'basetypes',
     }
+
+    def breakName(self, name, msg):
+        """Break into debugger if this is a special name"""
+
+        # List of string names to break on
+        bad = (
+        )
+
+        if name in bad and True:
+            print('breakName {}: {}'.format(name, msg))
+            pdb.set_trace()
 
     def __init__(self, errFile=sys.stderr, warnFile=sys.stderr, diagFile=sys.stdout):
         """Constructor
@@ -553,7 +573,10 @@ class OutputGenerator:
                     # Work around this by chasing the aliases to get the actual value.
                     while numVal is None:
                         alias = self.registry.tree.find("enums/enum[@name='" + strVal + "']")
-                        (numVal, strVal) = self.enumToValue(alias, True)
+                        if alias is not None:
+                            (numVal, strVal) = self.enumToValue(alias, True, bitwidth, True)
+                        else:
+                            self.logMsg('error', 'No such alias {} for enum {}'.format(strVal, name))
                     decl += "static const {} {} = {};\n".format(flagTypeName, name, strVal)
 
                 if numVal is not None:
@@ -778,7 +801,6 @@ class OutputGenerator:
             self.warnFile.flush()
         if self.diagFile:
             self.diagFile.flush()
-        self.outFile.flush()
         if self.outFile != sys.stdout and self.outFile != sys.stderr:
             self.outFile.close()
 

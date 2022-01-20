@@ -119,7 +119,7 @@ extern "C" __declspec( dllimport ) FARPROC __stdcall GetProcAddress( HINSTANCE h
 #  include <span>
 #endif
 
-static_assert( VK_HEADER_VERSION == 197, "Wrong VK_HEADER_VERSION!" );
+static_assert( VK_HEADER_VERSION == 203, "Wrong VK_HEADER_VERSION!" );
 
 // 32-bit vulkan is not typesafe for handles, so don't allow copy constructors on this platform by default.
 // To enable this feature on 32-bit platforms please define VULKAN_HPP_TYPESAFE_CONVERSION
@@ -308,87 +308,25 @@ namespace VULKAN_HPP_NAMESPACE
 #    pragma GCC diagnostic pop
 #  endif
 
-    template <size_t N>
-    ArrayProxy( std::array<T, N> const & data ) VULKAN_HPP_NOEXCEPT
-      : m_count( N )
-      , m_ptr( data.data() )
+    // Any type with a .data() return type implicitly convertible to T*, and a .size() return type implicitly
+    // convertible to size_t. The const version can capture temporaries, with lifetime ending at end of statement.
+    template <typename V,
+              typename std::enable_if<
+                std::is_convertible<decltype( std::declval<V>().data() ), T *>::value &&
+                std::is_convertible<decltype( std::declval<V>().size() ), std::size_t>::value>::type * = nullptr>
+    ArrayProxy( V const & v ) VULKAN_HPP_NOEXCEPT
+      : m_count( static_cast<uint32_t>( v.size() ) )
+      , m_ptr( v.data() )
     {}
 
-    template <size_t N, typename B = T, typename std::enable_if<std::is_const<B>::value, int>::type = 0>
-    ArrayProxy( std::array<typename std::remove_const<T>::type, N> const & data ) VULKAN_HPP_NOEXCEPT
-      : m_count( N )
-      , m_ptr( data.data() )
+    template <typename V,
+              typename std::enable_if<
+                std::is_convertible<decltype( std::declval<V>().data() ), T *>::value &&
+                std::is_convertible<decltype( std::declval<V>().size() ), std::size_t>::value>::type * = nullptr>
+    ArrayProxy( V & v ) VULKAN_HPP_NOEXCEPT
+      : m_count( static_cast<uint32_t>( v.size() ) )
+      , m_ptr( v.data() )
     {}
-
-    template <size_t N>
-    ArrayProxy( std::array<T, N> & data ) VULKAN_HPP_NOEXCEPT
-      : m_count( N )
-      , m_ptr( data.data() )
-    {}
-
-    template <size_t N, typename B = T, typename std::enable_if<std::is_const<B>::value, int>::type = 0>
-    ArrayProxy( std::array<typename std::remove_const<T>::type, N> & data ) VULKAN_HPP_NOEXCEPT
-      : m_count( N )
-      , m_ptr( data.data() )
-    {}
-
-    template <class Allocator = std::allocator<typename std::remove_const<T>::type>>
-    ArrayProxy( std::vector<T, Allocator> const & data ) VULKAN_HPP_NOEXCEPT
-      : m_count( static_cast<uint32_t>( data.size() ) )
-      , m_ptr( data.data() )
-    {}
-
-    template <class Allocator = std::allocator<typename std::remove_const<T>::type>,
-              typename B      = T,
-              typename std::enable_if<std::is_const<B>::value, int>::type = 0>
-    ArrayProxy( std::vector<typename std::remove_const<T>::type, Allocator> const & data ) VULKAN_HPP_NOEXCEPT
-      : m_count( static_cast<uint32_t>( data.size() ) )
-      , m_ptr( data.data() )
-    {}
-
-    template <class Allocator = std::allocator<typename std::remove_const<T>::type>>
-    ArrayProxy( std::vector<T, Allocator> & data ) VULKAN_HPP_NOEXCEPT
-      : m_count( static_cast<uint32_t>( data.size() ) )
-      , m_ptr( data.data() )
-    {}
-
-    template <class Allocator = std::allocator<typename std::remove_const<T>::type>,
-              typename B      = T,
-              typename std::enable_if<std::is_const<B>::value, int>::type = 0>
-    ArrayProxy( std::vector<typename std::remove_const<T>::type, Allocator> & data ) VULKAN_HPP_NOEXCEPT
-      : m_count( static_cast<uint32_t>( data.size() ) )
-      , m_ptr( data.data() )
-    {}
-
-#  if defined( VULKAN_HPP_SUPPORT_SPAN )
-    template <size_t N = std::dynamic_extent>
-    ArrayProxy( std::span<T, N> const & data ) VULKAN_HPP_NOEXCEPT
-      : m_count( static_cast<uint32_t>( data.size() ) )
-      , m_ptr( data.data() )
-    {}
-
-    template <size_t N                                                    = std::dynamic_extent,
-              typename B                                                  = T,
-              typename std::enable_if<std::is_const<B>::value, int>::type = 0>
-    ArrayProxy( std::span<typename std::remove_const<T>::type, N> const & data ) VULKAN_HPP_NOEXCEPT
-      : m_count( static_cast<uint32_t>( data.size() ) )
-      , m_ptr( data.data() )
-    {}
-
-    template <size_t N = std::dynamic_extent>
-    ArrayProxy( std::span<T, N> & data ) VULKAN_HPP_NOEXCEPT
-      : m_count( static_cast<uint32_t>( data.size() ) )
-      , m_ptr( data.data() )
-    {}
-
-    template <size_t N                                                    = std::dynamic_extent,
-              typename B                                                  = T,
-              typename std::enable_if<std::is_const<B>::value, int>::type = 0>
-    ArrayProxy( std::span<typename std::remove_const<T>::type, N> & data ) VULKAN_HPP_NOEXCEPT
-      : m_count( static_cast<uint32_t>( data.size() ) )
-      , m_ptr( data.data() )
-    {}
-#  endif
 
     const T * begin() const VULKAN_HPP_NOEXCEPT
     {
@@ -451,7 +389,8 @@ namespace VULKAN_HPP_NAMESPACE
       , m_ptr( &value )
     {}
 
-    ArrayProxyNoTemporaries( T && value ) = delete;
+    template <typename V>
+    ArrayProxyNoTemporaries( V && value ) = delete;
 
     template <typename B = T, typename std::enable_if<std::is_const<B>::value, int>::type = 0>
     ArrayProxyNoTemporaries( typename std::remove_const<T>::type & value ) VULKAN_HPP_NOEXCEPT
@@ -506,116 +445,16 @@ namespace VULKAN_HPP_NAMESPACE
     template <typename B = T, typename std::enable_if<std::is_const<B>::value, int>::type = 0>
     ArrayProxyNoTemporaries( std::initializer_list<typename std::remove_const<T>::type> && list ) = delete;
 
-    template <size_t N>
-    ArrayProxyNoTemporaries( std::array<T, N> const & data ) VULKAN_HPP_NOEXCEPT
-      : m_count( N )
-      , m_ptr( data.data() )
+    // Any type with a .data() return type implicitly convertible to T*, and a // .size() return type implicitly
+    // convertible to size_t.
+    template <typename V,
+              typename std::enable_if<
+                std::is_convertible<decltype( std::declval<V>().data() ), T *>::value &&
+                std::is_convertible<decltype( std::declval<V>().size() ), std::size_t>::value>::type * = nullptr>
+    ArrayProxyNoTemporaries( V & v ) VULKAN_HPP_NOEXCEPT
+      : m_count( static_cast<uint32_t>( v.size() ) )
+      , m_ptr( v.data() )
     {}
-
-    template <size_t N>
-    ArrayProxyNoTemporaries( std::array<T, N> const && data ) = delete;
-
-    template <size_t N, typename B = T, typename std::enable_if<std::is_const<B>::value, int>::type = 0>
-    ArrayProxyNoTemporaries( std::array<typename std::remove_const<T>::type, N> const & data ) VULKAN_HPP_NOEXCEPT
-      : m_count( N )
-      , m_ptr( data.data() )
-    {}
-
-    template <size_t N, typename B = T, typename std::enable_if<std::is_const<B>::value, int>::type = 0>
-    ArrayProxyNoTemporaries( std::array<typename std::remove_const<T>::type, N> const && data ) = delete;
-
-    template <size_t N>
-    ArrayProxyNoTemporaries( std::array<T, N> & data ) VULKAN_HPP_NOEXCEPT
-      : m_count( N )
-      , m_ptr( data.data() )
-    {}
-
-    template <size_t N>
-    ArrayProxyNoTemporaries( std::array<T, N> && data ) = delete;
-
-    template <size_t N, typename B = T, typename std::enable_if<std::is_const<B>::value, int>::type = 0>
-    ArrayProxyNoTemporaries( std::array<typename std::remove_const<T>::type, N> & data ) VULKAN_HPP_NOEXCEPT
-      : m_count( N )
-      , m_ptr( data.data() )
-    {}
-
-    template <size_t N, typename B = T, typename std::enable_if<std::is_const<B>::value, int>::type = 0>
-    ArrayProxyNoTemporaries( std::array<typename std::remove_const<T>::type, N> && data ) = delete;
-
-    template <class Allocator = std::allocator<typename std::remove_const<T>::type>>
-    ArrayProxyNoTemporaries( std::vector<T, Allocator> const & data ) VULKAN_HPP_NOEXCEPT
-      : m_count( static_cast<uint32_t>( data.size() ) )
-      , m_ptr( data.data() )
-    {}
-
-    template <class Allocator = std::allocator<typename std::remove_const<T>::type>>
-    ArrayProxyNoTemporaries( std::vector<T, Allocator> const && data ) = delete;
-
-    template <class Allocator = std::allocator<typename std::remove_const<T>::type>,
-              typename B      = T,
-              typename std::enable_if<std::is_const<B>::value, int>::type = 0>
-    ArrayProxyNoTemporaries( std::vector<typename std::remove_const<T>::type, Allocator> const & data )
-      VULKAN_HPP_NOEXCEPT
-      : m_count( static_cast<uint32_t>( data.size() ) )
-      , m_ptr( data.data() )
-    {}
-
-    template <class Allocator = std::allocator<typename std::remove_const<T>::type>,
-              typename B      = T,
-              typename std::enable_if<std::is_const<B>::value, int>::type = 0>
-    ArrayProxyNoTemporaries( std::vector<typename std::remove_const<T>::type, Allocator> const && data ) = delete;
-
-    template <class Allocator = std::allocator<typename std::remove_const<T>::type>>
-    ArrayProxyNoTemporaries( std::vector<T, Allocator> & data ) VULKAN_HPP_NOEXCEPT
-      : m_count( static_cast<uint32_t>( data.size() ) )
-      , m_ptr( data.data() )
-    {}
-
-    template <class Allocator = std::allocator<typename std::remove_const<T>::type>>
-    ArrayProxyNoTemporaries( std::vector<T, Allocator> && data ) = delete;
-
-    template <class Allocator = std::allocator<typename std::remove_const<T>::type>,
-              typename B      = T,
-              typename std::enable_if<std::is_const<B>::value, int>::type = 0>
-    ArrayProxyNoTemporaries( std::vector<typename std::remove_const<T>::type, Allocator> & data ) VULKAN_HPP_NOEXCEPT
-      : m_count( static_cast<uint32_t>( data.size() ) )
-      , m_ptr( data.data() )
-    {}
-
-    template <class Allocator = std::allocator<typename std::remove_const<T>::type>,
-              typename B      = T,
-              typename std::enable_if<std::is_const<B>::value, int>::type = 0>
-    ArrayProxyNoTemporaries( std::vector<typename std::remove_const<T>::type, Allocator> && data ) = delete;
-
-#  if defined( VULKAN_HPP_SUPPORT_SPAN )
-    template <size_t N = std::dynamic_extent>
-    ArrayProxyNoTemporaries( std::span<T, N> const & data ) VULKAN_HPP_NOEXCEPT
-      : m_count( static_cast<uint32_t>( data.size() ) )
-      , m_ptr( data.data() )
-    {}
-
-    template <size_t N                                                    = std::dynamic_extent,
-              typename B                                                  = T,
-              typename std::enable_if<std::is_const<B>::value, int>::type = 0>
-    ArrayProxyNoTemporaries( std::span<typename std::remove_const<T>::type, N> const & data ) VULKAN_HPP_NOEXCEPT
-      : m_count( static_cast<uint32_t>( data.size() ) )
-      , m_ptr( data.data() )
-    {}
-
-    template <size_t N = std::dynamic_extent>
-    ArrayProxyNoTemporaries( std::span<T, N> & data ) VULKAN_HPP_NOEXCEPT
-      : m_count( static_cast<uint32_t>( data.size() ) )
-      , m_ptr( data.data() )
-    {}
-
-    template <size_t N                                                    = std::dynamic_extent,
-              typename B                                                  = T,
-              typename std::enable_if<std::is_const<B>::value, int>::type = 0>
-    ArrayProxyNoTemporaries( std::span<typename std::remove_const<T>::type, N> & data ) VULKAN_HPP_NOEXCEPT
-      : m_count( static_cast<uint32_t>( data.size() ) )
-      , m_ptr( data.data() )
-    {}
-#  endif
 
     const T * begin() const VULKAN_HPP_NOEXCEPT
     {
@@ -706,6 +545,13 @@ namespace VULKAN_HPP_NAMESPACE
     }
 #endif
 
+#if defined( VULKAN_HPP_HAS_SPACESHIP_OPERATOR )
+    template <typename B = T, typename std::enable_if<std::is_same<B, char>::value, int>::type = 0>
+    std::strong_ordering operator<=>( ArrayWrapper1D<char, N> const & rhs ) const VULKAN_HPP_NOEXCEPT
+    {
+      return *static_cast<std::array<char, N> const *>( this ) <=> *static_cast<std::array<char, N> const *>( &rhs );
+    }
+#else
     template <typename B = T, typename std::enable_if<std::is_same<B, char>::value, int>::type = 0>
     bool operator<( ArrayWrapper1D<char, N> const & rhs ) const VULKAN_HPP_NOEXCEPT
     {
@@ -729,6 +575,7 @@ namespace VULKAN_HPP_NAMESPACE
     {
       return *static_cast<std::array<char, N> const *>( this ) >= *static_cast<std::array<char, N> const *>( &rhs );
     }
+#endif
 
     template <typename B = T, typename std::enable_if<std::is_same<B, char>::value, int>::type = 0>
     bool operator==( ArrayWrapper1D<char, N> const & rhs ) const VULKAN_HPP_NOEXCEPT
@@ -1076,7 +923,10 @@ namespace VULKAN_HPP_NAMESPACE
     {
       static_assert( StructureChainValidation<sizeof...( ChainElements ) - 1, ChainElements...>::valid,
                      "The structure chain is not valid!" );
-      link<sizeof...( ChainElements ) - 1>();
+      link( &std::get<0>( *this ),
+            &std::get<0>( rhs ),
+            reinterpret_cast<VkBaseOutStructure *>( &std::get<0>( *this ) ),
+            reinterpret_cast<VkBaseInStructure const *>( &std::get<0>( rhs ) ) );
     }
 
     StructureChain( StructureChain && rhs ) VULKAN_HPP_NOEXCEPT
@@ -1084,7 +934,10 @@ namespace VULKAN_HPP_NAMESPACE
     {
       static_assert( StructureChainValidation<sizeof...( ChainElements ) - 1, ChainElements...>::valid,
                      "The structure chain is not valid!" );
-      link<sizeof...( ChainElements ) - 1>();
+      link( &std::get<0>( *this ),
+            &std::get<0>( rhs ),
+            reinterpret_cast<VkBaseOutStructure *>( &std::get<0>( *this ) ),
+            reinterpret_cast<VkBaseInStructure const *>( &std::get<0>( rhs ) ) );
     }
 
     StructureChain( ChainElements const &... elems ) VULKAN_HPP_NOEXCEPT : std::tuple<ChainElements...>( elems... )
@@ -1097,7 +950,10 @@ namespace VULKAN_HPP_NAMESPACE
     StructureChain & operator=( StructureChain const & rhs ) VULKAN_HPP_NOEXCEPT
     {
       std::tuple<ChainElements...>::operator=( rhs );
-      link<sizeof...( ChainElements ) - 1>();
+      link( &std::get<0>( *this ),
+            &std::get<0>( rhs ),
+            reinterpret_cast<VkBaseOutStructure *>( &std::get<0>( *this ) ),
+            reinterpret_cast<VkBaseInStructure const *>( &std::get<0>( rhs ) ) );
       return *this;
     }
 
@@ -1237,6 +1093,19 @@ namespace VULKAN_HPP_NAMESPACE
     template <size_t Index>
     typename std::enable_if<Index == 0, void>::type link() VULKAN_HPP_NOEXCEPT
     {}
+
+    void link( void * dstBase, void const * srcBase, VkBaseOutStructure * dst, VkBaseInStructure const * src )
+    {
+      while ( src->pNext )
+      {
+        std::ptrdiff_t offset =
+          reinterpret_cast<char const *>( src->pNext ) - reinterpret_cast<char const *>( srcBase );
+        dst->pNext = reinterpret_cast<VkBaseOutStructure *>( reinterpret_cast<char *>( dstBase ) + offset );
+        dst        = dst->pNext;
+        src        = src->pNext;
+      }
+      dst->pNext = nullptr;
+    }
 
     void unlink( VkBaseOutStructure const * pNext ) VULKAN_HPP_NOEXCEPT
     {
@@ -2948,8 +2817,8 @@ namespace VULKAN_HPP_NAMESPACE
       return ::vkCmdResolveImage2( commandBuffer, pResolveImageInfo );
     }
 
-    void vkCmdBeginRendering( VkCommandBuffer            commandBuffer,
-                              const VkRenderingInfoKHR * pRenderingInfo ) const VULKAN_HPP_NOEXCEPT
+    void vkCmdBeginRendering( VkCommandBuffer         commandBuffer,
+                              const VkRenderingInfo * pRenderingInfo ) const VULKAN_HPP_NOEXCEPT
     {
       return ::vkCmdBeginRendering( commandBuffer, pRenderingInfo );
     }
@@ -3669,8 +3538,8 @@ namespace VULKAN_HPP_NAMESPACE
 
     //=== VK_KHR_dynamic_rendering ===
 
-    void vkCmdBeginRenderingKHR( VkCommandBuffer            commandBuffer,
-                                 const VkRenderingInfoKHR * pRenderingInfo ) const VULKAN_HPP_NOEXCEPT
+    void vkCmdBeginRenderingKHR( VkCommandBuffer         commandBuffer,
+                                 const VkRenderingInfo * pRenderingInfo ) const VULKAN_HPP_NOEXCEPT
     {
       return ::vkCmdBeginRenderingKHR( commandBuffer, pRenderingInfo );
     }
@@ -5506,11 +5375,11 @@ namespace VULKAN_HPP_NAMESPACE
       return ::vkQueueSubmit2KHR( queue, submitCount, pSubmits, fence );
     }
 
-    void vkCmdWriteBufferMarker2AMD( VkCommandBuffer          commandBuffer,
-                                     VkPipelineStageFlags2KHR stage,
-                                     VkBuffer                 dstBuffer,
-                                     VkDeviceSize             dstOffset,
-                                     uint32_t                 marker ) const VULKAN_HPP_NOEXCEPT
+    void vkCmdWriteBufferMarker2AMD( VkCommandBuffer       commandBuffer,
+                                     VkPipelineStageFlags2 stage,
+                                     VkBuffer              dstBuffer,
+                                     VkDeviceSize          dstOffset,
+                                     uint32_t              marker ) const VULKAN_HPP_NOEXCEPT
     {
       return ::vkCmdWriteBufferMarker2AMD( commandBuffer, stage, dstBuffer, dstOffset, marker );
     }
@@ -6538,14 +6407,14 @@ namespace VULKAN_HPP_NAMESPACE
     {}
   };
 
-  class NotPermittedEXTError : public SystemError
+  class NotPermittedKHRError : public SystemError
   {
   public:
-    NotPermittedEXTError( std::string const & message )
-      : SystemError( make_error_code( Result::eErrorNotPermittedEXT ), message )
+    NotPermittedKHRError( std::string const & message )
+      : SystemError( make_error_code( Result::eErrorNotPermittedKHR ), message )
     {}
-    NotPermittedEXTError( char const * message )
-      : SystemError( make_error_code( Result::eErrorNotPermittedEXT ), message )
+    NotPermittedKHRError( char const * message )
+      : SystemError( make_error_code( Result::eErrorNotPermittedKHR ), message )
     {}
   };
 
@@ -6593,7 +6462,7 @@ namespace VULKAN_HPP_NAMESPACE
         case Result::eErrorInvalidShaderNV: throw InvalidShaderNVError( message );
         case Result::eErrorInvalidDrmFormatModifierPlaneLayoutEXT:
           throw InvalidDrmFormatModifierPlaneLayoutEXTError( message );
-        case Result::eErrorNotPermittedEXT: throw NotPermittedEXTError( message );
+        case Result::eErrorNotPermittedKHR: throw NotPermittedKHRError( message );
 #  if defined( VK_USE_PLATFORM_WIN32_KHR )
         case Result::eErrorFullScreenExclusiveModeLostEXT: throw FullScreenExclusiveModeLostEXTError( message );
 #  endif /*VK_USE_PLATFORM_WIN32_KHR*/
@@ -6904,6 +6773,7 @@ namespace VULKAN_HPP_NAMESPACE
 
 namespace VULKAN_HPP_NAMESPACE
 {
+
   //=======================
   //=== STRUCTS EXTENDS ===
   //=======================
@@ -6966,7 +6836,7 @@ namespace VULKAN_HPP_NAMESPACE
     };
   };
   template <>
-  struct StructExtends<DeviceGroupRenderPassBeginInfo, RenderingInfoKHR>
+  struct StructExtends<DeviceGroupRenderPassBeginInfo, RenderingInfo>
   {
     enum
     {
@@ -8189,6 +8059,14 @@ namespace VULKAN_HPP_NAMESPACE
 #if defined( VK_ENABLE_BETA_EXTENSIONS )
   //=== VK_KHR_video_queue ===
   template <>
+  struct StructExtends<QueueFamilyQueryResultStatusProperties2KHR, QueueFamilyProperties2>
+  {
+    enum
+    {
+      value = true
+    };
+  };
+  template <>
   struct StructExtends<VideoQueueFamilyProperties2KHR, QueueFamilyProperties2>
   {
     enum
@@ -8428,6 +8306,22 @@ namespace VULKAN_HPP_NAMESPACE
       value = true
     };
   };
+  template <>
+  struct StructExtends<VideoEncodeH264RateControlInfoEXT, VideoEncodeRateControlInfoKHR>
+  {
+    enum
+    {
+      value = true
+    };
+  };
+  template <>
+  struct StructExtends<VideoEncodeH264RateControlLayerInfoEXT, VideoEncodeRateControlLayerInfoKHR>
+  {
+    enum
+    {
+      value = true
+    };
+  };
 #endif /*VK_ENABLE_BETA_EXTENSIONS*/
 
 #if defined( VK_ENABLE_BETA_EXTENSIONS )
@@ -8522,6 +8416,22 @@ namespace VULKAN_HPP_NAMESPACE
   };
   template <>
   struct StructExtends<VideoEncodeH265ProfileEXT, BufferCreateInfo>
+  {
+    enum
+    {
+      value = true
+    };
+  };
+  template <>
+  struct StructExtends<VideoEncodeH265RateControlInfoEXT, VideoEncodeRateControlInfoKHR>
+  {
+    enum
+    {
+      value = true
+    };
+  };
+  template <>
+  struct StructExtends<VideoEncodeH265RateControlLayerInfoEXT, VideoEncodeRateControlLayerInfoKHR>
   {
     enum
     {
@@ -8650,7 +8560,7 @@ namespace VULKAN_HPP_NAMESPACE
 
   //=== VK_KHR_dynamic_rendering ===
   template <>
-  struct StructExtends<RenderingFragmentShadingRateAttachmentInfoKHR, RenderingInfoKHR>
+  struct StructExtends<RenderingFragmentShadingRateAttachmentInfoKHR, RenderingInfo>
   {
     enum
     {
@@ -8658,7 +8568,7 @@ namespace VULKAN_HPP_NAMESPACE
     };
   };
   template <>
-  struct StructExtends<RenderingFragmentDensityMapAttachmentInfoEXT, RenderingInfoKHR>
+  struct StructExtends<RenderingFragmentDensityMapAttachmentInfoEXT, RenderingInfo>
   {
     enum
     {
@@ -8698,7 +8608,7 @@ namespace VULKAN_HPP_NAMESPACE
     };
   };
   template <>
-  struct StructExtends<MultiviewPerViewAttributesInfoNVX, RenderingInfoKHR>
+  struct StructExtends<MultiviewPerViewAttributesInfoNVX, RenderingInfo>
   {
     enum
     {
@@ -8773,7 +8683,7 @@ namespace VULKAN_HPP_NAMESPACE
     };
   };
   template <>
-  struct StructExtends<Win32KeyedMutexAcquireReleaseInfoNV, SubmitInfo2KHR>
+  struct StructExtends<Win32KeyedMutexAcquireReleaseInfoNV, SubmitInfo2>
   {
     enum
     {
@@ -8859,7 +8769,7 @@ namespace VULKAN_HPP_NAMESPACE
     };
   };
   template <>
-  struct StructExtends<Win32KeyedMutexAcquireReleaseInfoKHR, SubmitInfo2KHR>
+  struct StructExtends<Win32KeyedMutexAcquireReleaseInfoKHR, SubmitInfo2>
   {
     enum
     {
@@ -9110,7 +9020,7 @@ namespace VULKAN_HPP_NAMESPACE
     };
   };
   template <>
-  struct StructExtends<PerformanceQuerySubmitInfoKHR, SubmitInfo2KHR>
+  struct StructExtends<PerformanceQuerySubmitInfoKHR, SubmitInfo2>
   {
     enum
     {
@@ -9520,16 +9430,6 @@ namespace VULKAN_HPP_NAMESPACE
     };
   };
 
-  //=== VK_EXT_global_priority ===
-  template <>
-  struct StructExtends<DeviceQueueGlobalPriorityCreateInfoEXT, DeviceQueueCreateInfo>
-  {
-    enum
-    {
-      value = true
-    };
-  };
-
   //=== VK_EXT_external_memory_host ===
   template <>
   struct StructExtends<ImportMemoryHostPointerInfoEXT, MemoryAllocateInfo>
@@ -9693,6 +9593,40 @@ namespace VULKAN_HPP_NAMESPACE
     };
   };
 #endif /*VK_ENABLE_BETA_EXTENSIONS*/
+
+  //=== VK_KHR_global_priority ===
+  template <>
+  struct StructExtends<DeviceQueueGlobalPriorityCreateInfoKHR, DeviceQueueCreateInfo>
+  {
+    enum
+    {
+      value = true
+    };
+  };
+  template <>
+  struct StructExtends<PhysicalDeviceGlobalPriorityQueryFeaturesKHR, PhysicalDeviceFeatures2>
+  {
+    enum
+    {
+      value = true
+    };
+  };
+  template <>
+  struct StructExtends<PhysicalDeviceGlobalPriorityQueryFeaturesKHR, DeviceCreateInfo>
+  {
+    enum
+    {
+      value = true
+    };
+  };
+  template <>
+  struct StructExtends<QueueFamilyGlobalPriorityPropertiesKHR, QueueFamilyProperties2>
+  {
+    enum
+    {
+      value = true
+    };
+  };
 
   //=== VK_AMD_memory_overallocation_behavior ===
   template <>
@@ -10678,6 +10612,14 @@ namespace VULKAN_HPP_NAMESPACE
       value = true
     };
   };
+  template <>
+  struct StructExtends<VideoEncodeRateControlLayerInfoKHR, VideoCodingControlInfoKHR>
+  {
+    enum
+    {
+      value = true
+    };
+  };
 #endif /*VK_ENABLE_BETA_EXTENSIONS*/
 
   //=== VK_NV_device_diagnostics_config ===
@@ -10901,6 +10843,24 @@ namespace VULKAN_HPP_NAMESPACE
     };
   };
 
+  //=== VK_ARM_rasterization_order_attachment_access ===
+  template <>
+  struct StructExtends<PhysicalDeviceRasterizationOrderAttachmentAccessFeaturesARM, PhysicalDeviceFeatures2>
+  {
+    enum
+    {
+      value = true
+    };
+  };
+  template <>
+  struct StructExtends<PhysicalDeviceRasterizationOrderAttachmentAccessFeaturesARM, DeviceCreateInfo>
+  {
+    enum
+    {
+      value = true
+    };
+  };
+
   //=== VK_EXT_rgba10x6_formats ===
   template <>
   struct StructExtends<PhysicalDeviceRGBA10X6FormatsFeaturesEXT, PhysicalDeviceFeatures2>
@@ -11018,6 +10978,32 @@ namespace VULKAN_HPP_NAMESPACE
   //=== VK_EXT_physical_device_drm ===
   template <>
   struct StructExtends<PhysicalDeviceDrmPropertiesEXT, PhysicalDeviceProperties2>
+  {
+    enum
+    {
+      value = true
+    };
+  };
+
+  //=== VK_EXT_depth_clip_control ===
+  template <>
+  struct StructExtends<PhysicalDeviceDepthClipControlFeaturesEXT, PhysicalDeviceFeatures2>
+  {
+    enum
+    {
+      value = true
+    };
+  };
+  template <>
+  struct StructExtends<PhysicalDeviceDepthClipControlFeaturesEXT, DeviceCreateInfo>
+  {
+    enum
+    {
+      value = true
+    };
+  };
+  template <>
+  struct StructExtends<PipelineViewportDepthClipControlCreateInfoEXT, PipelineViewportStateCreateInfo>
   {
     enum
     {
@@ -11197,9 +11183,9 @@ namespace VULKAN_HPP_NAMESPACE
     };
   };
 
-  //=== VK_EXT_global_priority_query ===
+  //=== VK_EXT_image_view_min_lod ===
   template <>
-  struct StructExtends<PhysicalDeviceGlobalPriorityQueryFeaturesEXT, PhysicalDeviceFeatures2>
+  struct StructExtends<PhysicalDeviceImageViewMinLodFeaturesEXT, PhysicalDeviceFeatures2>
   {
     enum
     {
@@ -11207,7 +11193,7 @@ namespace VULKAN_HPP_NAMESPACE
     };
   };
   template <>
-  struct StructExtends<PhysicalDeviceGlobalPriorityQueryFeaturesEXT, DeviceCreateInfo>
+  struct StructExtends<PhysicalDeviceImageViewMinLodFeaturesEXT, DeviceCreateInfo>
   {
     enum
     {
@@ -11215,7 +11201,7 @@ namespace VULKAN_HPP_NAMESPACE
     };
   };
   template <>
-  struct StructExtends<QueueFamilyGlobalPriorityPropertiesEXT, QueueFamilyProperties2>
+  struct StructExtends<ImageViewMinLodCreateInfoEXT, ImageViewCreateInfo>
   {
     enum
     {
@@ -11286,6 +11272,58 @@ namespace VULKAN_HPP_NAMESPACE
   };
   template <>
   struct StructExtends<PhysicalDevicePageableDeviceLocalMemoryFeaturesEXT, DeviceCreateInfo>
+  {
+    enum
+    {
+      value = true
+    };
+  };
+
+  //=== VK_QCOM_fragment_density_map_offset ===
+  template <>
+  struct StructExtends<PhysicalDeviceFragmentDensityMapOffsetFeaturesQCOM, PhysicalDeviceFeatures2>
+  {
+    enum
+    {
+      value = true
+    };
+  };
+  template <>
+  struct StructExtends<PhysicalDeviceFragmentDensityMapOffsetFeaturesQCOM, DeviceCreateInfo>
+  {
+    enum
+    {
+      value = true
+    };
+  };
+  template <>
+  struct StructExtends<PhysicalDeviceFragmentDensityMapOffsetPropertiesQCOM, PhysicalDeviceProperties2>
+  {
+    enum
+    {
+      value = true
+    };
+  };
+  template <>
+  struct StructExtends<SubpassFragmentDensityMapOffsetEndInfoQCOM, SubpassEndInfo>
+  {
+    enum
+    {
+      value = true
+    };
+  };
+
+  //=== VK_NV_linear_color_attachment ===
+  template <>
+  struct StructExtends<PhysicalDeviceLinearColorAttachmentFeaturesNV, PhysicalDeviceFeatures2>
+  {
+    enum
+    {
+      value = true
+    };
+  };
+  template <>
+  struct StructExtends<PhysicalDeviceLinearColorAttachmentFeaturesNV, DeviceCreateInfo>
   {
     enum
     {
@@ -14783,485 +14821,4 @@ namespace VULKAN_HPP_NAMESPACE
     }
   };
 }  // namespace VULKAN_HPP_NAMESPACE
-
-namespace std
-{
-  //=======================
-  //=== HASH structures ===
-  //=======================
-
-  template <typename BitType>
-  struct hash<VULKAN_HPP_NAMESPACE::Flags<BitType>>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::Flags<BitType> const & flags ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<typename std::underlying_type<BitType>::type>{}(
-        static_cast<typename std::underlying_type<BitType>::type>( flags ) );
-    }
-  };
-
-  //=== VK_VERSION_1_0 ===
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::Instance>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::Instance const & instance ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkInstance>{}( static_cast<VkInstance>( instance ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::PhysicalDevice>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::PhysicalDevice const & physicalDevice ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkPhysicalDevice>{}( static_cast<VkPhysicalDevice>( physicalDevice ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::Device>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::Device const & device ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkDevice>{}( static_cast<VkDevice>( device ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::Queue>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::Queue const & queue ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkQueue>{}( static_cast<VkQueue>( queue ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::DeviceMemory>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::DeviceMemory const & deviceMemory ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkDeviceMemory>{}( static_cast<VkDeviceMemory>( deviceMemory ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::Fence>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::Fence const & fence ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkFence>{}( static_cast<VkFence>( fence ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::Semaphore>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::Semaphore const & semaphore ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkSemaphore>{}( static_cast<VkSemaphore>( semaphore ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::Event>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::Event const & event ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkEvent>{}( static_cast<VkEvent>( event ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::QueryPool>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::QueryPool const & queryPool ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkQueryPool>{}( static_cast<VkQueryPool>( queryPool ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::Buffer>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::Buffer const & buffer ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkBuffer>{}( static_cast<VkBuffer>( buffer ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::BufferView>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::BufferView const & bufferView ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkBufferView>{}( static_cast<VkBufferView>( bufferView ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::Image>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::Image const & image ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkImage>{}( static_cast<VkImage>( image ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::ImageView>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::ImageView const & imageView ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkImageView>{}( static_cast<VkImageView>( imageView ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::ShaderModule>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::ShaderModule const & shaderModule ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkShaderModule>{}( static_cast<VkShaderModule>( shaderModule ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::PipelineCache>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::PipelineCache const & pipelineCache ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkPipelineCache>{}( static_cast<VkPipelineCache>( pipelineCache ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::Pipeline>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::Pipeline const & pipeline ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkPipeline>{}( static_cast<VkPipeline>( pipeline ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::PipelineLayout>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::PipelineLayout const & pipelineLayout ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkPipelineLayout>{}( static_cast<VkPipelineLayout>( pipelineLayout ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::Sampler>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::Sampler const & sampler ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkSampler>{}( static_cast<VkSampler>( sampler ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::DescriptorPool>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::DescriptorPool const & descriptorPool ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkDescriptorPool>{}( static_cast<VkDescriptorPool>( descriptorPool ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::DescriptorSet>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::DescriptorSet const & descriptorSet ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkDescriptorSet>{}( static_cast<VkDescriptorSet>( descriptorSet ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::DescriptorSetLayout>
-  {
-    std::size_t
-      operator()( VULKAN_HPP_NAMESPACE::DescriptorSetLayout const & descriptorSetLayout ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkDescriptorSetLayout>{}( static_cast<VkDescriptorSetLayout>( descriptorSetLayout ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::Framebuffer>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::Framebuffer const & framebuffer ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkFramebuffer>{}( static_cast<VkFramebuffer>( framebuffer ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::RenderPass>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::RenderPass const & renderPass ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkRenderPass>{}( static_cast<VkRenderPass>( renderPass ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::CommandPool>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::CommandPool const & commandPool ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkCommandPool>{}( static_cast<VkCommandPool>( commandPool ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::CommandBuffer>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::CommandBuffer const & commandBuffer ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkCommandBuffer>{}( static_cast<VkCommandBuffer>( commandBuffer ) );
-    }
-  };
-
-  //=== VK_VERSION_1_1 ===
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::SamplerYcbcrConversion>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::SamplerYcbcrConversion const & samplerYcbcrConversion ) const
-      VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkSamplerYcbcrConversion>{}( static_cast<VkSamplerYcbcrConversion>( samplerYcbcrConversion ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::DescriptorUpdateTemplate>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::DescriptorUpdateTemplate const & descriptorUpdateTemplate ) const
-      VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkDescriptorUpdateTemplate>{}(
-        static_cast<VkDescriptorUpdateTemplate>( descriptorUpdateTemplate ) );
-    }
-  };
-
-  //=== VK_VERSION_1_3 ===
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::PrivateDataSlot>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::PrivateDataSlot const & privateDataSlot ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkPrivateDataSlot>{}( static_cast<VkPrivateDataSlot>( privateDataSlot ) );
-    }
-  };
-
-  //=== VK_KHR_surface ===
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::SurfaceKHR>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::SurfaceKHR const & surfaceKHR ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkSurfaceKHR>{}( static_cast<VkSurfaceKHR>( surfaceKHR ) );
-    }
-  };
-
-  //=== VK_KHR_swapchain ===
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::SwapchainKHR>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::SwapchainKHR const & swapchainKHR ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkSwapchainKHR>{}( static_cast<VkSwapchainKHR>( swapchainKHR ) );
-    }
-  };
-
-  //=== VK_KHR_display ===
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::DisplayKHR>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::DisplayKHR const & displayKHR ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkDisplayKHR>{}( static_cast<VkDisplayKHR>( displayKHR ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::DisplayModeKHR>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::DisplayModeKHR const & displayModeKHR ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkDisplayModeKHR>{}( static_cast<VkDisplayModeKHR>( displayModeKHR ) );
-    }
-  };
-
-  //=== VK_EXT_debug_report ===
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::DebugReportCallbackEXT>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::DebugReportCallbackEXT const & debugReportCallbackEXT ) const
-      VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkDebugReportCallbackEXT>{}( static_cast<VkDebugReportCallbackEXT>( debugReportCallbackEXT ) );
-    }
-  };
-
-#if defined( VK_ENABLE_BETA_EXTENSIONS )
-  //=== VK_KHR_video_queue ===
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::VideoSessionKHR>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::VideoSessionKHR const & videoSessionKHR ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkVideoSessionKHR>{}( static_cast<VkVideoSessionKHR>( videoSessionKHR ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::VideoSessionParametersKHR>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::VideoSessionParametersKHR const & videoSessionParametersKHR ) const
-      VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkVideoSessionParametersKHR>{}(
-        static_cast<VkVideoSessionParametersKHR>( videoSessionParametersKHR ) );
-    }
-  };
-#endif /*VK_ENABLE_BETA_EXTENSIONS*/
-
-  //=== VK_NVX_binary_import ===
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::CuModuleNVX>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::CuModuleNVX const & cuModuleNVX ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkCuModuleNVX>{}( static_cast<VkCuModuleNVX>( cuModuleNVX ) );
-    }
-  };
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::CuFunctionNVX>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::CuFunctionNVX const & cuFunctionNVX ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkCuFunctionNVX>{}( static_cast<VkCuFunctionNVX>( cuFunctionNVX ) );
-    }
-  };
-
-  //=== VK_EXT_debug_utils ===
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::DebugUtilsMessengerEXT>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::DebugUtilsMessengerEXT const & debugUtilsMessengerEXT ) const
-      VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkDebugUtilsMessengerEXT>{}( static_cast<VkDebugUtilsMessengerEXT>( debugUtilsMessengerEXT ) );
-    }
-  };
-
-  //=== VK_KHR_acceleration_structure ===
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::AccelerationStructureKHR>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::AccelerationStructureKHR const & accelerationStructureKHR ) const
-      VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkAccelerationStructureKHR>{}(
-        static_cast<VkAccelerationStructureKHR>( accelerationStructureKHR ) );
-    }
-  };
-
-  //=== VK_EXT_validation_cache ===
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::ValidationCacheEXT>
-  {
-    std::size_t
-      operator()( VULKAN_HPP_NAMESPACE::ValidationCacheEXT const & validationCacheEXT ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkValidationCacheEXT>{}( static_cast<VkValidationCacheEXT>( validationCacheEXT ) );
-    }
-  };
-
-  //=== VK_NV_ray_tracing ===
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::AccelerationStructureNV>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::AccelerationStructureNV const & accelerationStructureNV ) const
-      VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkAccelerationStructureNV>{}(
-        static_cast<VkAccelerationStructureNV>( accelerationStructureNV ) );
-    }
-  };
-
-  //=== VK_INTEL_performance_query ===
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::PerformanceConfigurationINTEL>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::PerformanceConfigurationINTEL const & performanceConfigurationINTEL )
-      const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkPerformanceConfigurationINTEL>{}(
-        static_cast<VkPerformanceConfigurationINTEL>( performanceConfigurationINTEL ) );
-    }
-  };
-
-  //=== VK_KHR_deferred_host_operations ===
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::DeferredOperationKHR>
-  {
-    std::size_t
-      operator()( VULKAN_HPP_NAMESPACE::DeferredOperationKHR const & deferredOperationKHR ) const VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkDeferredOperationKHR>{}( static_cast<VkDeferredOperationKHR>( deferredOperationKHR ) );
-    }
-  };
-
-  //=== VK_NV_device_generated_commands ===
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::IndirectCommandsLayoutNV>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::IndirectCommandsLayoutNV const & indirectCommandsLayoutNV ) const
-      VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkIndirectCommandsLayoutNV>{}(
-        static_cast<VkIndirectCommandsLayoutNV>( indirectCommandsLayoutNV ) );
-    }
-  };
-
-#if defined( VK_USE_PLATFORM_FUCHSIA )
-  //=== VK_FUCHSIA_buffer_collection ===
-
-  template <>
-  struct hash<VULKAN_HPP_NAMESPACE::BufferCollectionFUCHSIA>
-  {
-    std::size_t operator()( VULKAN_HPP_NAMESPACE::BufferCollectionFUCHSIA const & bufferCollectionFUCHSIA ) const
-      VULKAN_HPP_NOEXCEPT
-    {
-      return std::hash<VkBufferCollectionFUCHSIA>{}(
-        static_cast<VkBufferCollectionFUCHSIA>( bufferCollectionFUCHSIA ) );
-    }
-  };
-#endif /*VK_USE_PLATFORM_FUCHSIA*/
-
-}  // namespace std
 #endif

@@ -95,7 +95,7 @@ typedef struct VkAndroidHardwareBufferFormatProperties2ANDROID {
     void*                            pNext;
     VkFormat                         format;
     uint64_t                         externalFormat;
-    VkFormatFeatureFlags2KHR         formatFeatures;
+    VkFormatFeatureFlags2            formatFeatures;
     VkComponentMapping               samplerYcbcrConversionComponents;
     VkSamplerYcbcrModelConversion    suggestedYcbcrModel;
     VkSamplerYcbcrRange              suggestedYcbcrRange;

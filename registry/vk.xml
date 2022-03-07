@@ -14320,5 +14320,11 @@ typedef void <name>CAMetalLayer</name>;
                 <enum value="&quot;VK_EXT_extension_362&quot;"              name="VK_EXT_EXTENSION_362_EXTENSION_NAME"/>
             </require>
         </extension>
+        <extension name="VK_GOOGLE_surfaceless_query" number="434" type="instance" requires="VK_KHR_surface" author="GOOGLE" contact="Shahbaz Youssefi @syoussefi" specialuse="glemulation" supported="vulkan">
+            <require>
+                <enum value="1"                                         name="VK_GOOGLE_SURFACELESS_QUERY_SPEC_VERSION"/>
+                <enum value="&quot;VK_GOOGLE_surfaceless_query&quot;"   name="VK_GOOGLE_SURFACELESS_QUERY_EXTENSION_NAME"/>
+            </require>
+        </extension>
     </extensions>
 </registry>

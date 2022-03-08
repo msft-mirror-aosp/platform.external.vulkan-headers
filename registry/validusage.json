@@ -29617,26 +29617,6 @@
           "text": " If the <code>pNext</code> chain includes a <a href=\"#VkSurfaceFullScreenExclusiveInfoEXT\">VkSurfaceFullScreenExclusiveInfoEXT</a> structure with its <code>fullScreenExclusive</code> member set to <code>VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT</code>, and <code>surface</code> was created using <a href=\"#vkCreateWin32SurfaceKHR\">vkCreateWin32SurfaceKHR</a>, a <a href=\"#VkSurfaceFullScreenExclusiveWin32InfoEXT\">VkSurfaceFullScreenExclusiveWin32InfoEXT</a> structure <strong class=\"purple\">must</strong> be included in the <code>pNext</code> chain"
         }
       ],
-      "(VK_KHR_surface)+(VK_KHR_get_surface_capabilities2)+(VK_KHR_win32_surface+VK_EXT_full_screen_exclusive)+(VK_GOOGLE_surfaceless_query)": [
-        {
-          "vuid": "VUID-VkPhysicalDeviceSurfaceInfo2KHR-pSurfaceInfo-06526",
-          "text": " When passed as the <code>pSurfaceInfo</code> parameter of <a href=\"#vkGetPhysicalDeviceSurfaceCapabilities2KHR\">vkGetPhysicalDeviceSurfaceCapabilities2KHR</a>, if the <code><a href=\"#VK_GOOGLE_surfaceless_query\">VK_GOOGLE_surfaceless_query</a></code> extension is enabled and the <code>pNext</code> chain of the <code>pSurfaceCapabilities</code> parameter includes <code>VkSurfaceProtectedCapabilitiesKHR</code>, then <code>surface</code> <strong class=\"purple\">can</strong> be <a href=\"#VK_NULL_HANDLE\">VK_NULL_HANDLE</a>. Otherwise, <code>surface</code> <strong class=\"purple\">must</strong> be a valid <a href=\"#VkSurfaceKHR\">VkSurfaceKHR</a> handle"
-        },
-        {
-          "vuid": "VUID-VkPhysicalDeviceSurfaceInfo2KHR-pSurfaceInfo-06527",
-          "text": " When passed as the <code>pSurfaceInfo</code> parameter of <a href=\"#vkGetPhysicalDeviceSurfaceFormats2KHR\">vkGetPhysicalDeviceSurfaceFormats2KHR</a>, if the <code><a href=\"#VK_GOOGLE_surfaceless_query\">VK_GOOGLE_surfaceless_query</a></code> extension is enabled, then <code>surface</code> <strong class=\"purple\">can</strong> be <a href=\"#VK_NULL_HANDLE\">VK_NULL_HANDLE</a>. Otherwise, <code>surface</code> <strong class=\"purple\">must</strong> be a valid <a href=\"#VkSurfaceKHR\">VkSurfaceKHR</a> handle"
-        },
-        {
-          "vuid": "VUID-VkPhysicalDeviceSurfaceInfo2KHR-pSurfaceInfo-06528",
-          "text": " When passed as the <code>pSurfaceInfo</code> parameter of <a href=\"#vkGetPhysicalDeviceSurfacePresentModes2EXT\">vkGetPhysicalDeviceSurfacePresentModes2EXT</a>, if the <code><a href=\"#VK_GOOGLE_surfaceless_query\">VK_GOOGLE_surfaceless_query</a></code> extension is enabled, then <code>surface</code> <strong class=\"purple\">can</strong> be <a href=\"#VK_NULL_HANDLE\">VK_NULL_HANDLE</a>. Otherwise, <code>surface</code> <strong class=\"purple\">must</strong> be a valid <a href=\"#VkSurfaceKHR\">VkSurfaceKHR</a> handle"
-        }
-      ],
-      "(VK_KHR_surface)+(VK_KHR_get_surface_capabilities2)+(VK_KHR_win32_surface+VK_EXT_full_screen_exclusive)+!(VK_GOOGLE_surfaceless_query)": [
-        {
-          "vuid": "VUID-VkPhysicalDeviceSurfaceInfo2KHR-surface-06529",
-          "text": " <code>surface</code> <strong class=\"purple\">must</strong> be a valid <a href=\"#VkSurfaceKHR\">VkSurfaceKHR</a> handle"
-        }
-      ],
       "(VK_KHR_surface)+(VK_KHR_get_surface_capabilities2)": [
         {
           "vuid": "VUID-VkPhysicalDeviceSurfaceInfo2KHR-sType-sType",
@@ -29765,26 +29745,6 @@
       ]
     },
     "vkGetPhysicalDeviceSurfaceFormatsKHR": {
-      "(VK_KHR_surface)+(VK_GOOGLE_surfaceless_query)": [
-        {
-          "vuid": "VUID-vkGetPhysicalDeviceSurfaceFormatsKHR-surface-06524",
-          "text": " If the <code><a href=\"#VK_GOOGLE_surfaceless_query\">VK_GOOGLE_surfaceless_query</a></code> extension is not enabled, <code>surface</code> <strong class=\"purple\">must</strong> be a valid <a href=\"#VkSurfaceKHR\">VkSurfaceKHR</a> handle"
-        },
-        {
-          "vuid": "VUID-vkGetPhysicalDeviceSurfaceFormatsKHR-surface-06525",
-          "text": " If <code>surface</code> is not <a href=\"#VK_NULL_HANDLE\">VK_NULL_HANDLE</a>, it <strong class=\"purple\">must</strong> be supported by <code>physicalDevice</code>, as reported by <a href=\"#vkGetPhysicalDeviceSurfaceSupportKHR\">vkGetPhysicalDeviceSurfaceSupportKHR</a> or an equivalent platform-specific mechanism"
-        }
-      ],
-      "(VK_KHR_surface)+!(VK_GOOGLE_surfaceless_query)": [
-        {
-          "vuid": "VUID-vkGetPhysicalDeviceSurfaceFormatsKHR-surface-06523",
-          "text": " <code>surface</code> <strong class=\"purple\">must</strong> be a valid <a href=\"#VkSurfaceKHR\">VkSurfaceKHR</a> handle"
-        },
-        {
-          "vuid": "VUID-vkGetPhysicalDeviceSurfaceFormatsKHR-surface-06211",
-          "text": " <code>surface</code> <strong class=\"purple\">must</strong> be supported by <code>physicalDevice</code>, as reported by <a href=\"#vkGetPhysicalDeviceSurfaceSupportKHR\">vkGetPhysicalDeviceSurfaceSupportKHR</a> or an equivalent platform-specific mechanism"
-        }
-      ],
       "(VK_KHR_surface)": [
         {
           "vuid": "VUID-vkGetPhysicalDeviceSurfaceFormatsKHR-surface-02739",
@@ -29813,26 +29773,6 @@
       ]
     },
     "vkGetPhysicalDeviceSurfaceFormats2KHR": {
-      "(VK_KHR_surface)+(VK_KHR_get_surface_capabilities2)+(VK_GOOGLE_surfaceless_query)": [
-        {
-          "vuid": "VUID-vkGetPhysicalDeviceSurfaceFormats2KHR-pSurfaceInfo-06521",
-          "text": " If the <code><a href=\"#VK_GOOGLE_surfaceless_query\">VK_GOOGLE_surfaceless_query</a></code> extension is not enabled, <code>pSurfaceInfo-&gt;surface</code> <strong class=\"purple\">must</strong> be a valid <a href=\"#VkSurfaceKHR\">VkSurfaceKHR</a> handle"
-        },
-        {
-          "vuid": "VUID-vkGetPhysicalDeviceSurfaceFormats2KHR-pSurfaceInfo-06522",
-          "text": " If <code>pSurfaceInfo-&gt;surface</code> is not <a href=\"#VK_NULL_HANDLE\">VK_NULL_HANDLE</a>, it <strong class=\"purple\">must</strong> be supported by <code>physicalDevice</code>, as reported by <a href=\"#vkGetPhysicalDeviceSurfaceSupportKHR\">vkGetPhysicalDeviceSurfaceSupportKHR</a> or an equivalent platform-specific mechanism"
-        }
-      ],
-      "(VK_KHR_surface)+(VK_KHR_get_surface_capabilities2)+!(VK_GOOGLE_surfaceless_query)": [
-        {
-          "vuid": "VUID-vkGetPhysicalDeviceSurfaceFormats2KHR-pSurfaceInfo-06520",
-          "text": " <code>pSurfaceInfo-&gt;surface</code> <strong class=\"purple\">must</strong> be a valid <a href=\"#VkSurfaceKHR\">VkSurfaceKHR</a> handle"
-        },
-        {
-          "vuid": "VUID-vkGetPhysicalDeviceSurfaceFormats2KHR-pSurfaceInfo-06210",
-          "text": " <code>pSurfaceInfo-&gt;surface</code> <strong class=\"purple\">must</strong> be supported by <code>physicalDevice</code>, as reported by <a href=\"#vkGetPhysicalDeviceSurfaceSupportKHR\">vkGetPhysicalDeviceSurfaceSupportKHR</a> or an equivalent platform-specific mechanism"
-        }
-      ],
       "(VK_KHR_surface)+(VK_KHR_get_surface_capabilities2)": [
         {
           "vuid": "VUID-vkGetPhysicalDeviceSurfaceFormats2KHR-pSurfaceInfo-02740",
@@ -29869,26 +29809,6 @@
       ]
     },
     "vkGetPhysicalDeviceSurfacePresentModesKHR": {
-      "(VK_KHR_surface)+(VK_GOOGLE_surfaceless_query)": [
-        {
-          "vuid": "VUID-vkGetPhysicalDeviceSurfacePresentModesKHR-surface-06524",
-          "text": " If the <code><a href=\"#VK_GOOGLE_surfaceless_query\">VK_GOOGLE_surfaceless_query</a></code> extension is not enabled, <code>surface</code> <strong class=\"purple\">must</strong> be a valid <a href=\"#VkSurfaceKHR\">VkSurfaceKHR</a> handle"
-        },
-        {
-          "vuid": "VUID-vkGetPhysicalDeviceSurfacePresentModesKHR-surface-06525",
-          "text": " If <code>surface</code> is not <a href=\"#VK_NULL_HANDLE\">VK_NULL_HANDLE</a>, it <strong class=\"purple\">must</strong> be supported by <code>physicalDevice</code>, as reported by <a href=\"#vkGetPhysicalDeviceSurfaceSupportKHR\">vkGetPhysicalDeviceSurfaceSupportKHR</a> or an equivalent platform-specific mechanism"
-        }
-      ],
-      "(VK_KHR_surface)+!(VK_GOOGLE_surfaceless_query)": [
-        {
-          "vuid": "VUID-vkGetPhysicalDeviceSurfacePresentModesKHR-surface-06523",
-          "text": " <code>surface</code> <strong class=\"purple\">must</strong> be a valid <a href=\"#VkSurfaceKHR\">VkSurfaceKHR</a> handle"
-        },
-        {
-          "vuid": "VUID-vkGetPhysicalDeviceSurfacePresentModesKHR-surface-06211",
-          "text": " <code>surface</code> <strong class=\"purple\">must</strong> be supported by <code>physicalDevice</code>, as reported by <a href=\"#vkGetPhysicalDeviceSurfaceSupportKHR\">vkGetPhysicalDeviceSurfaceSupportKHR</a> or an equivalent platform-specific mechanism"
-        }
-      ],
       "(VK_KHR_surface)": [
         {
           "vuid": "VUID-vkGetPhysicalDeviceSurfacePresentModesKHR-physicalDevice-parameter",
@@ -29913,26 +29833,6 @@
       ]
     },
     "vkGetPhysicalDeviceSurfacePresentModes2EXT": {
-      "(VK_KHR_surface)+(VK_EXT_full_screen_exclusive)+(VK_GOOGLE_surfaceless_query)": [
-        {
-          "vuid": "VUID-vkGetPhysicalDeviceSurfacePresentModes2EXT-pSurfaceInfo-06521",
-          "text": " If the <code><a href=\"#VK_GOOGLE_surfaceless_query\">VK_GOOGLE_surfaceless_query</a></code> extension is not enabled, <code>pSurfaceInfo-&gt;surface</code> <strong class=\"purple\">must</strong> be a valid <a href=\"#VkSurfaceKHR\">VkSurfaceKHR</a> handle"
-        },
-        {
-          "vuid": "VUID-vkGetPhysicalDeviceSurfacePresentModes2EXT-pSurfaceInfo-06522",
-          "text": " If <code>pSurfaceInfo-&gt;surface</code> is not <a href=\"#VK_NULL_HANDLE\">VK_NULL_HANDLE</a>, it <strong class=\"purple\">must</strong> be supported by <code>physicalDevice</code>, as reported by <a href=\"#vkGetPhysicalDeviceSurfaceSupportKHR\">vkGetPhysicalDeviceSurfaceSupportKHR</a> or an equivalent platform-specific mechanism"
-        }
-      ],
-      "(VK_KHR_surface)+(VK_EXT_full_screen_exclusive)+!(VK_GOOGLE_surfaceless_query)": [
-        {
-          "vuid": "VUID-vkGetPhysicalDeviceSurfacePresentModes2EXT-pSurfaceInfo-06520",
-          "text": " <code>pSurfaceInfo-&gt;surface</code> <strong class=\"purple\">must</strong> be a valid <a href=\"#VkSurfaceKHR\">VkSurfaceKHR</a> handle"
-        },
-        {
-          "vuid": "VUID-vkGetPhysicalDeviceSurfacePresentModes2EXT-pSurfaceInfo-06210",
-          "text": " <code>pSurfaceInfo-&gt;surface</code> <strong class=\"purple\">must</strong> be supported by <code>physicalDevice</code>, as reported by <a href=\"#vkGetPhysicalDeviceSurfaceSupportKHR\">vkGetPhysicalDeviceSurfaceSupportKHR</a> or an equivalent platform-specific mechanism"
-        }
-      ],
       "(VK_KHR_surface)+(VK_EXT_full_screen_exclusive)": [
         {
           "vuid": "VUID-vkGetPhysicalDeviceSurfacePresentModes2EXT-physicalDevice-parameter",

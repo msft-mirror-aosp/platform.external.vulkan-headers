@@ -11302,12 +11302,6 @@ typedef struct VkPhysicalDevice4444FormatsFeaturesEXT {
 } VkPhysicalDevice4444FormatsFeaturesEXT;
 
 
-
-#define VK_GOOGLE_surfaceless_query 1
-#define VK_GOOGLE_SURFACELESS_QUERY_SPEC_VERSION 1
-#define VK_GOOGLE_SURFACELESS_QUERY_EXTENSION_NAME "VK_GOOGLE_surfaceless_query"
-
-
 #ifdef __cplusplus
 }
 #endif

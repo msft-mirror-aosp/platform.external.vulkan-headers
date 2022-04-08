@@ -1,128 +1,134 @@
 #!/usr/bin/python3 -i
 #
-# Copyright (c) 2013-2020 The Khronos Group Inc.
+# Copyright (c) 2013-2019 The Khronos Group Inc.
 #
-# SPDX-License-Identifier: Apache-2.0
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 import os
 import re
+import sys
 from generator import (GeneratorOptions, OutputGenerator, noneStr,
                        regSortFeatures, write)
 
-
+# CGeneratorOptions - subclass of GeneratorOptions.
+#
+# Adds options used by COutputGenerator objects during C language header
+# generation.
+#
+# Additional members
+#   prefixText - list of strings to prefix generated header with
+#     (usually a copyright statement + calling convention macros).
+#   protectFile - True if multiple inclusion protection should be
+#     generated (based on the filename) around the entire header.
+#   protectFeature - True if #ifndef..#endif protection should be
+#     generated around a feature interface in the header file.
+#   genFuncPointers - True if function pointer typedefs should be
+#     generated
+#   protectProto - If conditional protection should be generated
+#     around prototype declarations, set to either '#ifdef'
+#     to require opt-in (#ifdef protectProtoStr) or '#ifndef'
+#     to require opt-out (#ifndef protectProtoStr). Otherwise
+#     set to None.
+#   protectProtoStr - #ifdef/#ifndef symbol to use around prototype
+#     declarations, if protectProto is set
+#   apicall - string to use for the function declaration prefix,
+#     such as APICALL on Windows.
+#   apientry - string to use for the calling convention macro,
+#     in typedefs, such as APIENTRY.
+#   apientryp - string to use for the calling convention macro
+#     in function pointer typedefs, such as APIENTRYP.
+#   directory - directory into which to generate include files
+#   indentFuncProto - True if prototype declarations should put each
+#     parameter on a separate line
+#   indentFuncPointer - True if typedefed function pointers should put each
+#     parameter on a separate line
+#   alignFuncParam - if nonzero and parameters are being put on a
+#     separate line, align parameter names at the specified column
+#   genEnumBeginEndRange - True if BEGIN_RANGE / END_RANGE macros should
+#     be generated for enumerated types
+#   genAliasMacro - True if the OpenXR alias macro should be generated
+#     for aliased types (unclear what other circumstances this is useful)
+#   aliasMacro - alias macro to inject when genAliasMacro is True
 class CGeneratorOptions(GeneratorOptions):
-    """CGeneratorOptions - subclass of GeneratorOptions.
-
-    Adds options used by COutputGenerator objects during C language header
-    generation."""
+    """Represents options during C interface generation for headers"""
 
     def __init__(self,
-                 prefixText="",
-                 genFuncPointers=True,
-                 protectFile=True,
-                 protectFeature=True,
-                 protectProto=None,
-                 protectProtoStr=None,
-                 apicall='',
-                 apientry='',
-                 apientryp='',
-                 indentFuncProto=True,
-                 indentFuncPointer=False,
-                 alignFuncParam=0,
-                 genEnumBeginEndRange=False,
-                 genAliasMacro=False,
-                 aliasMacro='',
-                 **kwargs
-                 ):
-        """Constructor.
-        Additional parameters beyond parent class:
-
-        - prefixText - list of strings to prefix generated header with
-        (usually a copyright statement + calling convention macros).
-        - protectFile - True if multiple inclusion protection should be
-        generated (based on the filename) around the entire header.
-        - protectFeature - True if #ifndef..#endif protection should be
-        generated around a feature interface in the header file.
-        - genFuncPointers - True if function pointer typedefs should be
-        generated
-        - protectProto - If conditional protection should be generated
-        around prototype declarations, set to either '#ifdef'
-        to require opt-in (#ifdef protectProtoStr) or '#ifndef'
-        to require opt-out (#ifndef protectProtoStr). Otherwise
-        set to None.
-        - protectProtoStr - #ifdef/#ifndef symbol to use around prototype
-        declarations, if protectProto is set
-        - apicall - string to use for the function declaration prefix,
-        such as APICALL on Windows.
-        - apientry - string to use for the calling convention macro,
-        in typedefs, such as APIENTRY.
-        - apientryp - string to use for the calling convention macro
-        in function pointer typedefs, such as APIENTRYP.
-        - indentFuncProto - True if prototype declarations should put each
-        parameter on a separate line
-        - indentFuncPointer - True if typedefed function pointers should put each
-        parameter on a separate line
-        - alignFuncParam - if nonzero and parameters are being put on a
-        separate line, align parameter names at the specified column
-        - genEnumBeginEndRange - True if BEGIN_RANGE / END_RANGE macros should
-        be generated for enumerated types
-        - genAliasMacro - True if the OpenXR alias macro should be generated
-        for aliased types (unclear what other circumstances this is useful)
-        - aliasMacro - alias macro to inject when genAliasMacro is True"""
-        GeneratorOptions.__init__(self, **kwargs)
-
-        self.prefixText = prefixText
-        """list of strings to prefix generated header with (usually a copyright statement + calling convention macros)."""
-
+                 conventions = None,
+                 filename = None,
+                 directory = '.',
+                 apiname = None,
+                 profile = None,
+                 versions = '.*',
+                 emitversions = '.*',
+                 defaultExtensions = None,
+                 addExtensions = None,
+                 removeExtensions = None,
+                 emitExtensions = None,
+                 sortProcedure = regSortFeatures,
+                 prefixText = "",
+                 genFuncPointers = True,
+                 protectFile = True,
+                 protectFeature = True,
+                 protectProto = None,
+                 protectProtoStr = None,
+                 apicall = '',
+                 apientry = '',
+                 apientryp = '',
+                 indentFuncProto = True,
+                 indentFuncPointer = False,
+                 alignFuncParam = 0,
+                 genEnumBeginEndRange = False,
+                 genAliasMacro = False,
+                 aliasMacro = ''
+                ):
+        GeneratorOptions.__init__(self, conventions, filename, directory, apiname, profile,
+                                  versions, emitversions, defaultExtensions,
+                                  addExtensions, removeExtensions,
+                                  emitExtensions, sortProcedure)
+        self.prefixText      = prefixText
         self.genFuncPointers = genFuncPointers
-        """True if function pointer typedefs should be generated"""
-
-        self.protectFile = protectFile
-        """True if multiple inclusion protection should be generated (based on the filename) around the entire header."""
-
-        self.protectFeature = protectFeature
-        """True if #ifndef..#endif protection should be generated around a feature interface in the header file."""
-
-        self.protectProto = protectProto
-        """If conditional protection should be generated around prototype declarations, set to either '#ifdef' to require opt-in (#ifdef protectProtoStr) or '#ifndef' to require opt-out (#ifndef protectProtoStr). Otherwise set to None."""
-
+        self.protectFile     = protectFile
+        self.protectFeature  = protectFeature
+        self.protectProto    = protectProto
         self.protectProtoStr = protectProtoStr
-        """#ifdef/#ifndef symbol to use around prototype declarations, if protectProto is set"""
-
-        self.apicall = apicall
-        """string to use for the function declaration prefix, such as APICALL on Windows."""
-
-        self.apientry = apientry
-        """string to use for the calling convention macro, in typedefs, such as APIENTRY."""
-
-        self.apientryp = apientryp
-        """string to use for the calling convention macro in function pointer typedefs, such as APIENTRYP."""
-
+        self.apicall         = apicall
+        self.apientry        = apientry
+        self.apientryp       = apientryp
         self.indentFuncProto = indentFuncProto
-        """True if prototype declarations should put each parameter on a separate line"""
-
         self.indentFuncPointer = indentFuncPointer
-        """True if typedefed function pointers should put each parameter on a separate line"""
-
-        self.alignFuncParam = alignFuncParam
-        """if nonzero and parameters are being put on a separate line, align parameter names at the specified column"""
-
+        self.alignFuncParam  = alignFuncParam
         self.genEnumBeginEndRange = genEnumBeginEndRange
-        """True if BEGIN_RANGE / END_RANGE macros should be generated for enumerated types"""
+        self.genAliasMacro   = genAliasMacro
+        self.aliasMacro      = aliasMacro
 
-        self.genAliasMacro = genAliasMacro
-        """True if the OpenXR alias macro should be generated for aliased types (unclear what other circumstances this is useful)"""
-
-        self.aliasMacro = aliasMacro
-        """alias macro to inject when genAliasMacro is True"""
-
-        self.codeGenerator = True
-        """True if this generator makes compilable code"""
-
-
+# COutputGenerator - subclass of OutputGenerator.
+# Generates C-language API interfaces.
+#
+# ---- methods ----
+# COutputGenerator(errFile, warnFile, diagFile) - args as for
+#   OutputGenerator. Defines additional internal state.
+# ---- methods overriding base class ----
+# beginFile(genOpts)
+# endFile()
+# beginFeature(interface, emit)
+# endFeature()
+# genType(typeinfo,name)
+# genStruct(typeinfo,name)
+# genGroup(groupinfo,name)
+# genEnum(enuminfo, name)
+# genCmd(cmdinfo)
 class COutputGenerator(OutputGenerator):
-    """Generates C-language API interfaces."""
-
+    """Generate specified API interfaces in a specific style, such as a C header"""
     # This is an ordered list of sections in the header file.
     TYPE_SECTIONS = ['include', 'define', 'basetype', 'handle', 'enum',
                      'group', 'bitmask', 'funcpointer', 'struct']
@@ -183,8 +189,8 @@ class COutputGenerator(OutputGenerator):
         self.feature_not_empty = False
 
     def endFeature(self):
-        "Actually write the interface to the output file."
         # C-specific
+        # Actually write the interface to the output file.
         if self.emit:
             if self.feature_not_empty:
                 if self.genOpts.conventions.writeFeature(self.featureExtraProtect, self.genOpts.filename):
@@ -208,7 +214,7 @@ class COutputGenerator(OutputGenerator):
                     if self.sections['command']:
                         if self.genOpts.protectProto:
                             write(self.genOpts.protectProto,
-                                  self.genOpts.protectProtoStr, file=self.outFile)
+                                self.genOpts.protectProtoStr, file=self.outFile)
                         write('\n'.join(self.sections['command']), end='', file=self.outFile)
                         if self.genOpts.protectProto:
                             write('#endif', file=self.outFile)
@@ -221,14 +227,14 @@ class COutputGenerator(OutputGenerator):
         # Finish processing in superclass
         OutputGenerator.endFeature(self)
 
+    # Append a definition to the specified section
     def appendSection(self, section, text):
-        "Append a definition to the specified section"
         # self.sections[section].append('SECTION: ' + section + '\n')
         self.sections[section].append(text)
         self.feature_not_empty = True
 
+    # Type generation
     def genType(self, typeinfo, name, alias):
-        "Generate type."
         OutputGenerator.genType(self, typeinfo, name, alias)
         typeElem = typeinfo.elem
 
@@ -269,13 +275,12 @@ class COutputGenerator(OutputGenerator):
                     body += '\n'
                 self.appendSection(section, body)
 
+    # Protection string generation
+    # Protection strings are the strings defining the OS/Platform/Graphics
+    # requirements for a given OpenXR command.  When generating the
+    # language header files, we need to make sure the items specific to a
+    # graphics API or OS platform are properly wrapped in #ifs.
     def genProtectString(self, protect_str):
-        """Generate protection string.
-
-        Protection strings are the strings defining the OS/Platform/Graphics
-        requirements for a given OpenXR command.  When generating the
-        language header files, we need to make sure the items specific to a
-        graphics API or OS platform are properly wrapped in #ifs."""
         protect_if_str = ''
         protect_end_str = ''
         if not protect_str:
@@ -310,18 +315,16 @@ class COutputGenerator(OutputGenerator):
                                       if x is not None))
         return typeName in self.may_alias
 
+    # Struct (e.g. C "struct" type) generation.
+    # This is a special case of the <type> tag where the contents are
+    # interpreted as a set of <member> tags instead of freeform C
+    # C type declarations. The <member> tags are just like <param>
+    # tags - they are a declaration of a struct or union member.
+    # Only simple member declarations are supported (no nested
+    # structs etc.)
+    # If alias is not None, then this struct aliases another; just
+    #   generate a typedef of that alias.
     def genStruct(self, typeinfo, typeName, alias):
-        """Generate struct (e.g. C "struct" type).
-
-        This is a special case of the <type> tag where the contents are
-        interpreted as a set of <member> tags instead of freeform C
-        C type declarations. The <member> tags are just like <param>
-        tags - they are a declaration of a struct or union member.
-        Only simple member declarations are supported (no nested
-        structs etc.)
-
-        If alias is not None, then this struct aliases another; just
-        generate a typedef of that alias."""
         OutputGenerator.genStruct(self, typeinfo, typeName, alias)
 
         typeElem = typeinfo.elem
@@ -353,13 +356,11 @@ class COutputGenerator(OutputGenerator):
 
         self.appendSection('struct', body)
 
-    def genGroup(self, groupinfo, groupName, alias=None):
-        """Generate groups (e.g. C "enum" type).
-
-        These are concatenated together with other types.
-
-        If alias is not None, it is the name of another group type
-        which aliases this type; just generate that alias."""
+    # Group (e.g. C "enum" type) generation.
+    # These are concatenated together with other types.
+    # If alias is not None, it is the name of another group type
+    #   which aliases this type; just generate that alias.
+    def genGroup(self, groupinfo, groupName, alias = None):
         OutputGenerator.genGroup(self, groupinfo, groupName, alias)
         groupElem = groupinfo.elem
 
@@ -379,18 +380,17 @@ class COutputGenerator(OutputGenerator):
             (section, body) = self.buildEnumCDecl(self.genOpts.genEnumBeginEndRange, groupinfo, groupName)
             self.appendSection(section, "\n" + body)
 
+    # Enumerant generation
+    # <enum> tags may specify their values in several ways, but are usually
+    # just integers.
     def genEnum(self, enuminfo, name, alias):
-        """Generate enumerants.
-
-        <enum> tags may specify their values in several ways, but are usually
-        just integers."""
         OutputGenerator.genEnum(self, enuminfo, name, alias)
         (_, strVal) = self.enumToValue(enuminfo.elem, False)
         body = '#define ' + name.ljust(33) + ' ' + strVal
         self.appendSection('enum', body)
 
+    # Command generation
     def genCmd(self, cmdinfo, name, alias):
-        "Command generation"
         OutputGenerator.genCmd(self, cmdinfo, name, alias)
 
         # if alias:

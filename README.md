@@ -2,8 +2,6 @@
 
 Vulkan header files and API registry
 
-## Repository Content
-
 The contents of this repository are largely obtained from other repositories
 and are collected, coordinated, and curated here.
 
@@ -13,36 +11,32 @@ Files in this repository originate from:
 
 ### Specification repository (https://github.com/KhronosGroup/Vulkan-Docs)
 
-* registry/cgenerator.py
-* registry/conventions.py
-* registry/generator.py
-* registry/genvk.py
-* registry/reg.py
-* registry/spec_tools/util.py
-* registry/validusage.json
-* registry/vk.xml
-* registry/vkconventions.py
+* registry/*.py
+* registry/spec_tools/*.py
+* registry/profiles/*.json
 * All files under include/vulkan/ which are *not* listed explicitly as originating from another repository.
 
 ### This repository (https://github.com/KhronosGroup/Vulkan-Headers)
 
-* .cmake-format.py
 * BUILD.gn
 * BUILD.md
 * CMakeLists.txt
+* cmake/*
 * CODE_OF_CONDUCT.md
 * LICENSE.txt
 * README.md
-* cmake/Copyright_cmake.txt
-* cmake/cmake_uninstall.cmake.in
-* Non-API headers (report issues against @lenny-lunarg)
+* Non-API headers
   * include/vulkan/vk_icd.h
   * include/vulkan/vk_layer.h
   * include/vulkan/vk_sdk_platform.h
 
 ### Vulkan C++ Binding Repository (https://github.com/KhronosGroup/Vulkan-Hpp)
 
-* include/vulkan/vulkan.hpp
+As of the Vulkan-Docs 1.2.182 spec update, the Vulkan-Hpp headers have been
+split into multiple files. All of those files are now included in this
+repository.
+
+* include/vulkan/*.hpp
 
 ## Version Tagging Scheme
 

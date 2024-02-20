@@ -40,7 +40,7 @@ license {
         "SPDX-license-identifier-BSD",
     ],
     license_text: [
-        "LICENSE.txt",
+        "LICENSE.md",
     ],
 }
 
@@ -49,10 +49,7 @@ ndk_headers {
     from: "include",
     to: "",
     srcs: [
-        "include/vulkan/vk_platform.h",
-        "include/vulkan/vulkan.h",
-        "include/vulkan/vulkan_core.h",
-        "include/vulkan/vulkan_android.h",
+        "include/**/*.h",
     ],
     license: "NOTICE",
 }

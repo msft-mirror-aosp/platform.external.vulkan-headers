@@ -64,6 +64,7 @@ ndk_headers {
 cc_library_headers {
     name: "vulkan_headers",
     export_include_dirs: ["include"],
+    native_bridge_supported: true, // Used for verification in Berberis.
     host_supported: true,
     vendor_available: true,
     sdk_version: "24",

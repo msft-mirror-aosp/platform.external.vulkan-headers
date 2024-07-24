@@ -12,38 +12,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// This module defines which headers are included in the NDK sysroot during
-// the NDK build process.
 package {
     default_applicable_licenses: ["external_vulkan-headers_license"],
 }
 
-// Added automatically by a large-scale-change that took the approach of
-// 'apply every license found to every target'. While this makes sure we respect
-// every license restriction, it may not be entirely correct.
-//
-// e.g. GPL in an MIT project might only apply to the contrib/ directory.
-//
-// Please consider splitting the single license below into multiple licenses,
-// taking care not to lose any license_kind information, and overriding the
-// default license using the 'licenses: [...]' property on targets as needed.
-//
-// For unused files, consider creating a 'fileGroup' with "//visibility:private"
-// to attach the license to, and including a comment whether the files may be
-// used in the current project.
-// See: http://go/android-license-faq
 license {
     name: "external_vulkan-headers_license",
     visibility: [":__subpackages__"],
     license_kinds: [
         "SPDX-license-identifier-Apache-2.0",
-        "SPDX-license-identifier-BSD",
     ],
     license_text: [
-        "LICENSE.md",
+        "LICENSES/Apache-2.0.txt",
     ],
 }
 
+license {
+    name: "external_vulkan-headers_license.unused.MIT",
+    visibility: [":__subpackages__"],
+    license_kinds: [
+        "SPDX-license-identifier-MIT",
+    ],
+    license_text: [
+        "LICENSES/MIT.txt",
+    ],
+}
+
+filegroup {
+    name: "external_vulkan-headers_unused.MIT",
+    visibility: ["//visibility:private"],
+    licenses: ["external_vulkan-headers_license.unused.MIT"],
+    srcs: ["registry/parse_dependency.py"],
+}
+
+// This module defines which headers are included in the NDK sysroot during
+// the NDK build process.
 ndk_headers {
     name: "ndk_vulkan_headers",
     from: "include",
@@ -51,7 +54,7 @@ ndk_headers {
     srcs: [
         "include/**/*.h",
     ],
-    license: "NOTICE",
+    license: "LICENSES/Apache-2.0.txt",
 }
 
 // This module makes Vulkan headers available to other modules without
@@ -61,6 +64,7 @@ ndk_headers {
 cc_library_headers {
     name: "vulkan_headers",
     export_include_dirs: ["include"],
+    native_bridge_supported: true, // Used for verification in Berberis.
     host_supported: true,
     vendor_available: true,
     sdk_version: "24",

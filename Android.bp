@@ -55,6 +55,13 @@ ndk_headers {
         "include/**/*.h",
     ],
     license: "LICENSES/Apache-2.0.txt",
+    // The Vulkan headers aren't self-contained. vulkan_fuchsia.h, at the very
+    // least, requires other headers to be included first.
+    //
+    // Low risk to disable verification here since upstream also cares about
+    // C-compatibility. Can remove if upstream ever decides they want to
+    // guarantee self-contained headers as well.
+    skip_verification: true,
 }
 
 // This module makes Vulkan headers available to other modules without
@@ -64,6 +71,7 @@ ndk_headers {
 cc_library_headers {
     name: "vulkan_headers",
     export_include_dirs: ["include"],
+    native_bridge_supported: true, // Used for verification in Berberis.
     host_supported: true,
     vendor_available: true,
     sdk_version: "24",

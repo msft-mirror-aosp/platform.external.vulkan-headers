@@ -10,3 +10,4 @@ jessehall@google.com
 natsu@google.com
 romanl@google.com
 yuxinhu@google.com
+include platform/system/core:/janitors/OWNERS #{LAST_RESORT_SUGGESTION}

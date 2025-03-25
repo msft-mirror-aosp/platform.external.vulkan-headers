@@ -7843,6 +7843,7 @@ typedef struct VkPhysicalDeviceVulkan14Features {
     VkBool32           pipelineProtectedAccess;
     VkBool32           pipelineRobustness;
     VkBool32           hostImageCopy;
+    VkBool32           pushDescriptor;
 } VkPhysicalDeviceVulkan14Features;
 
 typedef struct VkPhysicalDeviceVulkan14Properties {

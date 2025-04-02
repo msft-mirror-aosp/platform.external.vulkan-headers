@@ -12699,6 +12699,7 @@ namespace std
       VULKAN_HPP_HASH_COMBINE( seed, physicalDeviceVulkan14Features.pipelineProtectedAccess );
       VULKAN_HPP_HASH_COMBINE( seed, physicalDeviceVulkan14Features.pipelineRobustness );
       VULKAN_HPP_HASH_COMBINE( seed, physicalDeviceVulkan14Features.hostImageCopy );
+      VULKAN_HPP_HASH_COMBINE( seed, physicalDeviceVulkan14Features.pushDescriptor );
       return seed;
     }
   };

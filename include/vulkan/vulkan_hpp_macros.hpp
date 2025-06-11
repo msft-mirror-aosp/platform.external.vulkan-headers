@@ -1,9 +1,10 @@
-// Copyright 2015-2024 The Khronos Group Inc.
-//
+// Copyright 2015-2025 The Khronos Group Inc.
+// 
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 //
 
 // This header is generated from the Khronos Vulkan XML API Registry.
+
 
 #ifndef VULKAN_HPP_MACROS_HPP
 #define VULKAN_HPP_MACROS_HPP
@@ -79,11 +80,11 @@
 #  define __has_include( x ) false
 #endif
 
-#if ( 201907 <= __cpp_lib_three_way_comparison ) && __has_include( <compare> ) && !defined( VULKAN_HPP_NO_SPACESHIP_OPERATOR )
+#if defined( __cpp_lib_three_way_comparison ) && ( 201907 <= __cpp_lib_three_way_comparison ) && __has_include( <compare> ) && !defined( VULKAN_HPP_NO_SPACESHIP_OPERATOR )
 #  define VULKAN_HPP_HAS_SPACESHIP_OPERATOR
 #endif
 
-#if ( 201803 <= __cpp_lib_span )
+#if defined( __cpp_lib_span ) && ( 201803 <= __cpp_lib_span )
 #  define VULKAN_HPP_SUPPORT_SPAN
 #endif
 
@@ -92,12 +93,11 @@
 #endif
 
 #ifndef VK_USE_64_BIT_PTR_DEFINES
-#  if defined( __LP64__ ) || defined( _WIN64 ) || ( defined( __x86_64__ ) && !defined( __ILP32__ ) ) || defined( _M_X64 ) || defined( __ia64 ) || \
-    defined( _M_IA64 ) || defined( __aarch64__ ) || defined( __powerpc64__ ) || ( defined( __riscv ) && __riscv_xlen == 64 )
-#    define VK_USE_64_BIT_PTR_DEFINES 1
-#  else
-#    define VK_USE_64_BIT_PTR_DEFINES 0
-#  endif
+    #if defined(__LP64__) || defined(_WIN64) || (defined(__x86_64__) && !defined(__ILP32__) ) || defined(_M_X64) || defined(__ia64) || defined (_M_IA64) || defined(__aarch64__) || defined(__powerpc64__) || (defined(__riscv) && __riscv_xlen == 64)
+        #define VK_USE_64_BIT_PTR_DEFINES 1
+    #else
+        #define VK_USE_64_BIT_PTR_DEFINES 0
+    #endif
 #endif
 
 // 32-bit vulkan is not typesafe for non-dispatchable handles, so don't allow copy constructors on this platform by default.
@@ -257,33 +257,40 @@
 
 namespace VULKAN_HPP_NAMESPACE
 {
-  class DispatchLoaderDynamic;
+  namespace detail
+  {
+	  class DispatchLoaderDynamic;
+
+#if !defined( VULKAN_HPP_DEFAULT_DISPATCHER )
+#  if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
+    extern VULKAN_HPP_STORAGE_API DispatchLoaderDynamic defaultDispatchLoaderDynamic;
+#  endif
+#endif
+  }  // namespace detail
 }  // namespace VULKAN_HPP_NAMESPACE
 
 #if !defined( VULKAN_HPP_DEFAULT_DISPATCHER )
 #  if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
-#    define VULKAN_HPP_DEFAULT_DISPATCHER ::VULKAN_HPP_NAMESPACE::defaultDispatchLoaderDynamic
-#    define VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE                                             \
-      namespace VULKAN_HPP_NAMESPACE                                                                       \
-      {                                                                                                    \
-        VULKAN_HPP_STORAGE_API ::VULKAN_HPP_NAMESPACE::DispatchLoaderDynamic defaultDispatchLoaderDynamic; \
+#    define VULKAN_HPP_DEFAULT_DISPATCHER ::VULKAN_HPP_NAMESPACE::detail::defaultDispatchLoaderDynamic
+#    define VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE                       \
+      namespace VULKAN_HPP_NAMESPACE                                                 \
+      {                                                                              \
+        namespace detail                                                             \
+        {                                                                            \
+          VULKAN_HPP_STORAGE_API DispatchLoaderDynamic defaultDispatchLoaderDynamic; \
+        }                                                                            \
       }
-
-namespace VULKAN_HPP_NAMESPACE
-{
-  extern VULKAN_HPP_STORAGE_API VULKAN_HPP_NAMESPACE::DispatchLoaderDynamic defaultDispatchLoaderDynamic;
-}  // namespace VULKAN_HPP_NAMESPACE
 #  else
-#    define VULKAN_HPP_DEFAULT_DISPATCHER ::VULKAN_HPP_NAMESPACE::getDispatchLoaderStatic()
+#    define VULKAN_HPP_DEFAULT_DISPATCHER ::VULKAN_HPP_NAMESPACE::detail::getDispatchLoaderStatic()
 #    define VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 #  endif
 #endif
 
 #if !defined( VULKAN_HPP_DEFAULT_DISPATCHER_TYPE )
 #  if VULKAN_HPP_DISPATCH_LOADER_DYNAMIC == 1
-#    define VULKAN_HPP_DEFAULT_DISPATCHER_TYPE ::VULKAN_HPP_NAMESPACE::DispatchLoaderDynamic
+#    define VULKAN_HPP_DEFAULT_DISPATCHER_TYPE ::VULKAN_HPP_NAMESPACE::detail::DispatchLoaderDynamic
 #  else
-#    define VULKAN_HPP_DEFAULT_DISPATCHER_TYPE ::VULKAN_HPP_NAMESPACE::DispatchLoaderStatic
+#    define VULKAN_HPP_DEFAULT_DISPATCHER_TYPE ::VULKAN_HPP_NAMESPACE::detail::DispatchLoaderStatic
 #  endif
 #endif
 
@@ -315,5 +322,6 @@ namespace VULKAN_HPP_NAMESPACE
 #else
 #  define VULKAN_HPP_RAII_CREATE_NOEXCEPT
 #endif
+
 
 #endif
